@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#080C14" />
+  <title>Nuhstar — Coming Soon</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=Syne:wght@400;600;700;800&family=Noto+Kufi+Arabic:wght@300;400&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    /* ── Design Tokens ─────────────────────────────────────── */
+    :root {
+      --gold:       #C9962A;
+      --gold-light: #E8B84B;
+      --gold-pale:  #F5D98A;
+      --deep:       #080C14;
+      --deep2:      #0C1220;
+      --slate:      #1E2A3A;
+      --text-muted: #6B7A90;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+
+    body {
+      background-color: var(--deep);
+      color: #E8E4DA;
+      font-family: 'Syne', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Cursor — shown only on fine-pointer (mouse) devices */
+    @media (pointer: fine) { body { cursor: none; } }
+    .cursor, .cursor-ring { display: none; }
+    @media (pointer: fine) {
+      .cursor {
+        display: block; position: fixed;
+        width: 10px; height: 10px;
+        background: var(--gold-light);
+        border-radius: 50%; pointer-events: none;
+        z-index: 9999; transform: translate(-50%,-50%);
+        mix-blend-mode: screen;
+      }
+      .cursor-ring {
+        display: block; position: fixed;
+        width: 36px; height: 36px;
+        border: 1px solid rgba(201,150,42,0.4);
+        border-radius: 50%; pointer-events: none;
+        z-index: 9998; transform: translate(-50%,-50%);
+        transition: all 0.12s ease-out;
+      }
+    }
+
+    /* ── Backgrounds ─────────────────────────────────────── */
+    .geo-bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+    .geo-bg::before {
+      content: ''; position: absolute; inset: 0;
+      background-image:
+        radial-gradient(ellipse 80% 60% at 50% -10%, rgba(201,150,42,0.12) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 40% at 80% 80%, rgba(30,42,58,0.8) 0%, transparent 60%);
+    }
+    .noise {
+      position: fixed; inset: 0; z-index: 1; pointer-events: none; opacity: 0.03;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-size: 200px;
+    }
+    .geo-pattern {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.04;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cg fill='none' stroke='%23C9962A' stroke-width='0.5'%3E%3Cpolygon points='60,5 95,27.5 95,72.5 60,95 25,72.5 25,27.5'/%3E%3Cpolygon points='60,20 80,32 80,56 60,68 40,56 40,32'/%3E%3Cline x1='60' y1='5' x2='60' y2='20'/%3E%3Cline x1='95' y1='27.5' x2='80' y2='32'/%3E%3Cline x1='95' y1='72.5' x2='80' y2='56'/%3E%3Cline x1='60' y1='95' x2='60' y2='68'/%3E%3Cline x1='25' y1='72.5' x2='40' y2='56'/%3E%3Cline x1='25' y1='27.5' x2='40' y2='32'/%3E%3C/g%3E%3C/svg%3E");
+      background-size: 120px;
+    }
+    .grid-lines {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background-image:
+        linear-gradient(rgba(201,150,42,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(201,150,42,0.03) 1px, transparent 1px);
+      background-size: 80px 80px;
+    }
+    .stars { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+    .star {
+      position: absolute; background: white; border-radius: 50%;
+      animation: twinkle var(--dur,3s) ease-in-out infinite var(--delay,0s);
+    }
+    @keyframes twinkle {
+      0%,100% { opacity: 0.1; transform: scale(1); }
+      50%      { opacity: 0.8; transform: scale(1.5); }
+    }
+    .scanline {
+      position: fixed; top: 0; left: 0; right: 0; height: 2px; z-index: 2;
+      pointer-events: none;
+      background: linear-gradient(90deg, transparent, rgba(201,150,42,0.15), transparent);
+      animation: scan 8s linear infinite;
+    }
+    @keyframes scan { 0% { transform: translateY(-2px); } 100% { transform: translateY(100vh); } }
+
+    /* ── Typography ────────────────────────────────────────── */
+    .gold-text {
+      background: linear-gradient(135deg, var(--gold-pale) 0%, var(--gold-light) 40%, var(--gold) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .wordmark { font-family:'Cormorant Garamond',serif; font-weight:300; letter-spacing:0.22em; text-transform:uppercase; }
+    .tagline-serif { font-family:'Cormorant Garamond',serif; font-style:italic; font-weight:300; }
+    .arabic-label { font-family:'Noto Kufi Arabic',sans-serif; }
+
+    /* ── Divider ───────────────────────────────────────────── */
+    .gold-line { display:flex; align-items:center; gap:12px; }
+    .gold-line::before,.gold-line::after {
+      content:''; flex:1; height:1px;
+      background: linear-gradient(90deg,transparent,var(--gold),transparent);
+    }
+    .gold-line-diamond { width:6px;height:6px;background:var(--gold-light);transform:rotate(45deg);flex-shrink:0; }
+
+    /* ── Countdown ─────────────────────────────────────────── */
+    .count-box {
+      background: linear-gradient(145deg,rgba(30,42,58,0.8) 0%,rgba(12,18,32,0.9) 100%);
+      border: 1px solid rgba(201,150,42,0.2);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      position: relative; overflow: hidden;
+    }
+    .count-box::before {
+      content:''; position:absolute; top:0;left:0;right:0;height:1px;
+      background: linear-gradient(90deg,transparent,var(--gold-light),transparent); opacity:0.5;
+    }
+    .count-box::after {
+      content:''; position:absolute; inset:0;
+      background: radial-gradient(ellipse at top,rgba(201,150,42,0.05) 0%,transparent 70%);
+    }
+    .count-number {
+      font-family:'Syne',sans-serif; font-weight:800; line-height:1;
+      background: linear-gradient(180deg,#F5D98A 0%,#C9962A 100%);
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+      font-size: clamp(1.6rem, 5.5vw, 2.3rem);
+    }
+    .glow-gold { box-shadow: 0 0 40px rgba(201,150,42,0.15), 0 0 80px rgba(201,150,42,0.05); }
+
+    /* ── Feature pills ─────────────────────────────────────── */
+    .feature-pill {
+      border:1px solid rgba(201,150,42,0.15); background:rgba(30,42,58,0.4);
+      backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+      transition: border-color 0.3s, background 0.3s;
+    }
+    .feature-pill:hover { border-color:rgba(201,150,42,0.4); background:rgba(30,42,58,0.7); }
+
+    /* ── Input / Button ────────────────────────────────────── */
+    .email-input {
+      background:rgba(12,18,32,0.8); border:1px solid rgba(201,150,42,0.25);
+      color:#E8E4DA; font-family:'Syne',sans-serif;
+      font-size:1rem; /* prevents iOS auto-zoom */
+      -webkit-appearance:none;
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+    .email-input:focus { outline:none; border-color:var(--gold-light); box-shadow:0 0 0 3px rgba(201,150,42,0.1),0 0 20px rgba(201,150,42,0.08); }
+    .email-input::placeholder { color:var(--text-muted); }
+
+    .btn-gold {
+      background: linear-gradient(135deg,var(--gold) 0%,var(--gold-light) 50%,var(--gold) 100%);
+      background-size: 200% 100%; color:var(--deep);
+      font-family:'Syne',sans-serif; font-weight:700;
+      letter-spacing:0.1em; text-transform:uppercase; font-size:0.75rem;
+      transition: background-position 0.4s ease, transform 0.2s, box-shadow 0.3s;
+      cursor:pointer; border:none; -webkit-appearance:none;
+    }
+    .btn-gold:hover { background-position:100% 0; transform:translateY(-1px); box-shadow:0 8px 30px rgba(201,150,42,0.35); }
+    .btn-gold:active { transform:translateY(0); }
+
+    /* ── Progress ──────────────────────────────────────────── */
+    .progress-bar { background:rgba(30,42,58,0.6); border:1px solid rgba(201,150,42,0.15); overflow:hidden; }
+    .progress-fill {
+      height:100%; width:0;
+      background:linear-gradient(90deg,var(--gold) 0%,var(--gold-light) 100%);
+      animation:progressFill 2.5s ease forwards 1.5s;
+    }
+    @keyframes progressFill { to { width:73%; } }
+
+    /* ── Reveal animations ─────────────────────────────────── */
+    .reveal { opacity:0; transform:translateY(24px); animation:revealUp 0.9s cubic-bezier(0.22,1,0.36,1) forwards; }
+    .reveal-fade { opacity:0; animation:fadeIn 1s ease forwards; }
+    @keyframes revealUp { to { opacity:1; transform:translateY(0); } }
+    @keyframes fadeIn   { to { opacity:1; } }
+
+    /* Honour reduce-motion preference */
+    @media (prefers-reduced-motion: reduce) {
+      .reveal,.reveal-fade,.progress-fill,.scanline,.star { animation:none !important; opacity:1 !important; transform:none !important; }
+      .progress-fill { width:73%; }
+    }
+
+    /* Delay classes */
+    .d1{animation-delay:.1s}.d2{animation-delay:.2s}.d3{animation-delay:.3s}
+    .d4{animation-delay:.4s}.d5{animation-delay:.5s}.d6{animation-delay:.6s}
+    .d7{animation-delay:.7s}.d8{animation-delay:.8s}.d10{animation-delay:1s}
+
+    /* ── Safe-area padding for notched phones ──────────────── */
+    .safe-wrap {
+      padding-left:  max(16px, env(safe-area-inset-left));
+      padding-right: max(16px, env(safe-area-inset-right));
+      padding-bottom: max(24px, env(safe-area-inset-bottom));
+    }
+
+    /* ── Toast ─────────────────────────────────────────────── */
+    #toast {
+      display:none; position:fixed; z-index:999;
+      bottom:20px; left:50%; transform:translateX(-50%);
+      background:linear-gradient(135deg,#0C1220,#1E2A3A);
+      border:1px solid rgba(201,150,42,0.4);
+      padding:12px 20px; border-radius:12px;
+      box-shadow:0 20px 60px rgba(0,0,0,0.5);
+      width:calc(100vw - 32px); max-width:400px;
+    }
+
+    /* ── Tiny phone tweak (< 360px) ───────────────────────── */
+    @media (max-width:359px) {
+      .feature-pill { padding:5px 8px; }
+      .feature-pill span { font-size:0.6rem; }
+    }
+
+    /* ── Ramadan Banner ──────────────────────────────────────── */
+    #ramadan-ribbon {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+      background: linear-gradient(90deg,
+        rgba(8,12,20,0.0) 0%,
+        rgba(12,18,32,0.97) 15%,
+        rgba(14,22,38,0.98) 85%,
+        rgba(8,12,20,0.0) 100%);
+      border-bottom: 1px solid rgba(201,150,42,0.18);
+      display: flex; align-items: center; justify-content: center;
+      gap: 10px; padding: 7px 16px;
+      animation: fadeIn 1.2s ease forwards;
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    }
+    #ramadan-ribbon .ribbon-text {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(0.6rem, 2.2vw, 0.72rem);
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--gold-pale);
+    }
+    #ramadan-ribbon .ribbon-arabic {
+      font-family: 'Noto Kufi Arabic', sans-serif;
+      font-size: clamp(0.7rem, 2.5vw, 0.82rem);
+      color: var(--gold-light);
+      letter-spacing: 0.05em;
+    }
+    .ribbon-dot {
+      width: 3px; height: 3px; border-radius: 50%;
+      background: var(--gold); opacity: 0.6; flex-shrink: 0;
+    }
+    @keyframes ribbonGlow {
+      0%,100% { text-shadow: 0 0 8px rgba(232,184,75,0.3); }
+      50%      { text-shadow: 0 0 18px rgba(232,184,75,0.7), 0 0 30px rgba(201,150,42,0.3); }
+    }
+    #ramadan-ribbon .ribbon-arabic { animation: ribbonGlow 3s ease-in-out infinite; }
+
+    /* crescent svg swing */
+    .crescent-svg { animation: crescentSwing 5s ease-in-out infinite; transform-origin: top center; }
+    @keyframes crescentSwing {
+      0%,100% { transform: rotate(-4deg); }
+      50%      { transform: rotate(4deg); }
+    }
+
+    /* lantern sway */
+    .lantern-svg { animation: lanternSway 4s ease-in-out infinite; transform-origin: top center; }
+    @keyframes lanternSway {
+      0%,100% { transform: rotate(5deg); }
+      50%      { transform: rotate(-5deg); }
+    }
+    .lantern-svg2 { animation: lanternSway 4s ease-in-out infinite 0.6s; transform-origin: top center; }
+
+    /* dismiss button */
+    #ribbon-close {
+      position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; cursor: pointer; padding: 4px;
+      color: var(--text-muted); transition: color 0.2s;
+      line-height: 1; font-size: 14px;
+    }
+    #ribbon-close:hover { color: var(--gold-light); }
+
+    /* ── Ramadan Hero Card ───────────────────────────────────── */
+    .ramadan-card {
+      position: relative; overflow: hidden;
+      background: linear-gradient(135deg,
+        rgba(30,42,58,0.55) 0%,
+        rgba(12,18,32,0.7) 100%);
+      border: 1px solid rgba(201,150,42,0.28);
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      border-radius: 20px;
+    }
+    .ramadan-card::before {
+      content:''; position:absolute; inset:0; border-radius:20px;
+      background: radial-gradient(ellipse at 50% 0%, rgba(201,150,42,0.1) 0%, transparent 65%);
+      pointer-events:none;
+    }
+    .ramadan-card::after {
+      content:''; position:absolute; top:0; left:0; right:0; height:1px;
+      background: linear-gradient(90deg, transparent, var(--gold-light), transparent);
+      opacity: 0.55;
+    }
+    .ramadan-big-arabic {
+      font-family: 'Noto Kufi Arabic', sans-serif;
+      font-size: clamp(1.5rem, 6vw, 2.6rem);
+      background: linear-gradient(135deg, var(--gold-pale) 0%, var(--gold-light) 50%, var(--gold) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      line-height: 1.3;
+      animation: ribbonGlow 3.5s ease-in-out infinite 0.8s;
+    }
+    .ramadan-big-en {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 300; font-style: italic;
+      font-size: clamp(1rem, 3.5vw, 1.5rem);
+      color: var(--gold-pale); letter-spacing: 0.08em;
+    }
+    .stars-deco span {
+      display: inline-block;
+      animation: twinkle var(--d,2s) ease-in-out infinite var(--dl,0s);
+      color: var(--gold-light); font-size: 0.7rem;
+    }
+
+    /* Push main content below the ribbon */
+    .safe-wrap { padding-top: max(44px, calc(env(safe-area-inset-top) + 44px)); }
+  </style>
+</head>
+<body>
+
+  <div class="cursor"      id="cursor"></div>
+  <div class="cursor-ring" id="cursorRing"></div>
+
+  <!-- ══ RAMADAN RIBBON ══════════════════════════════════════════ -->
+  <div id="ramadan-ribbon" role="banner" aria-label="Ramadan Kareem greeting">
+
+    <!-- Left lantern -->
+    <svg class="lantern-svg shrink-0" width="18" height="24" viewBox="0 0 24 32"
+         fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <line x1="12" y1="0" x2="12" y2="4" stroke="#C9962A" stroke-width="1.2"/>
+      <path d="M8 4h8l2 6H6L8 4z" fill="rgba(201,150,42,0.25)" stroke="#C9962A" stroke-width="0.8"/>
+      <rect x="5.5" y="10" width="13" height="14" rx="2"
+            fill="rgba(232,184,75,0.08)" stroke="#C9962A" stroke-width="0.8"/>
+      <line x1="12" y1="10" x2="12" y2="24" stroke="rgba(201,150,42,0.3)" stroke-width="0.5"/>
+      <line x1="5.5" y1="17" x2="18.5" y2="17" stroke="rgba(201,150,42,0.3)" stroke-width="0.5"/>
+      <ellipse cx="12" cy="17" rx="3" ry="3.5" fill="rgba(232,184,75,0.2)" stroke="#E8B84B" stroke-width="0.6"/>
+      <path d="M8 24h8l-1 4H9L8 24z" fill="rgba(201,150,42,0.2)" stroke="#C9962A" stroke-width="0.8"/>
+    </svg>
+
+    <!-- Crescent moon -->
+    <svg class="crescent-svg shrink-0" width="16" height="16" viewBox="0 0 24 24"
+         fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"
+            fill="rgba(201,150,42,0.25)" stroke="#E8B84B" stroke-width="1.5"
+            stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+
+    <!-- Text content -->
+    <span class="ribbon-arabic">رَمَضَانُ كَرِيم</span>
+    <div class="ribbon-dot"></div>
+    <span class="ribbon-text">Ramadan Kareem</span>
+    <div class="ribbon-dot"></div>
+    <span class="ribbon-text" style="color:var(--text-muted);letter-spacing:0.1em;">
+      Wishing you a blessed month
+    </span>
+
+    <!-- Right lantern (mirrored) -->
+    <svg class="lantern-svg2 shrink-0" width="18" height="24" viewBox="0 0 24 32"
+         fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"
+         style="transform:scaleX(-1)">
+      <line x1="12" y1="0" x2="12" y2="4" stroke="#C9962A" stroke-width="1.2"/>
+      <path d="M8 4h8l2 6H6L8 4z" fill="rgba(201,150,42,0.25)" stroke="#C9962A" stroke-width="0.8"/>
+      <rect x="5.5" y="10" width="13" height="14" rx="2"
+            fill="rgba(232,184,75,0.08)" stroke="#C9962A" stroke-width="0.8"/>
+      <line x1="12" y1="10" x2="12" y2="24" stroke="rgba(201,150,42,0.3)" stroke-width="0.5"/>
+      <line x1="5.5" y1="17" x2="18.5" y2="17" stroke="rgba(201,150,42,0.3)" stroke-width="0.5"/>
+      <ellipse cx="12" cy="17" rx="3" ry="3.5" fill="rgba(232,184,75,0.2)" stroke="#E8B84B" stroke-width="0.6"/>
+      <path d="M8 24h8l-1 4H9L8 24z" fill="rgba(201,150,42,0.2)" stroke="#C9962A" stroke-width="0.8"/>
+    </svg>
+
+    <!-- Dismiss -->
+    <button id="ribbon-close" aria-label="Dismiss Ramadan greeting">✕</button>
+  </div>
+
+  <!-- Background layers -->
+  <div class="geo-bg"></div>
+  <div class="geo-pattern"></div>
+  <div class="grid-lines"></div>
+  <div class="noise"></div>
+  <div class="stars" id="stars"></div>
+  <div class="scanline"></div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       LAYOUT  –  flex column, full height
+       px: 4 (mobile) → 6 (sm) → 10 (lg)
+       pt: 6 (mobile) → 8 (sm)
+  ══════════════════════════════════════════════════════════ -->
+  <div class="safe-wrap relative z-10 min-h-screen flex flex-col items-center justify-between
+              px-4 sm:px-6 lg:px-10 pt-6 sm:pt-8 pb-8 gap-4 sm:gap-6">
+
+    <!-- ══ HEADER ══════════════════════════════════════════════ -->
+    <header class="w-full max-w-6xl flex items-center justify-between flex-wrap gap-3
+                   reveal reveal-fade d1">
+
+      <!-- Logo -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        <svg width="26" height="26" viewBox="0 0 32 32" fill="none"
+             class="sm:w-8 sm:h-8 shrink-0">
+          <polygon points="16,2 28,9 28,23 16,30 4,23 4,9"   fill="none" stroke="#C9962A" stroke-width="1"/>
+          <polygon points="16,8 22,11.5 22,18.5 16,22 10,18.5 10,11.5" fill="none" stroke="#E8B84B" stroke-width="0.75"/>
+          <circle cx="16" cy="16" r="3" fill="#C9962A" opacity="0.9"/>
+          <line x1="16" y1="2"  x2="16" y2="8"    stroke="#C9962A" stroke-width="0.75"/>
+          <line x1="28" y1="9"  x2="22" y2="11.5" stroke="#C9962A" stroke-width="0.75"/>
+          <line x1="28" y1="23" x2="22" y2="18.5" stroke="#C9962A" stroke-width="0.75"/>
+          <line x1="16" y1="30" x2="16" y2="22"   stroke="#C9962A" stroke-width="0.75"/>
+          <line x1="4"  y1="23" x2="10" y2="18.5" stroke="#C9962A" stroke-width="0.75"/>
+          <line x1="4"  y1="9"  x2="10" y2="11.5" stroke="#C9962A" stroke-width="0.75"/>
+        </svg>
+        <span class="wordmark text-sm sm:text-base lg:text-lg gold-text">NUHSTAR</span>
+      </div>
+
+      <!-- Right meta -->
+      <div class="flex items-center gap-2 sm:gap-4">
+        <span class="arabic-label text-xs sm:text-sm" style="color:var(--text-muted);">نوهستار</span>
+        <div class="feature-pill px-2.5 sm:px-3 py-1 rounded-full flex items-center gap-1.5">
+          <span class="text-xs">🇸🇦</span>
+          <span class="text-xs tracking-wider" style="color:var(--text-muted);">KSA</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- ══ HERO ════════════════════════════════════════════════ -->
+    <main class="flex flex-col items-center text-center w-full max-w-4xl flex-1
+                 justify-center gap-4 sm:gap-5 lg:gap-7 py-2">
+
+      <!-- Category label -->
+      <div class="reveal d2 flex items-center gap-2 sm:gap-3">
+        <div style="width:30px;height:1px;background:linear-gradient(90deg,transparent,var(--gold))"
+             class="hidden sm:block"></div>
+        <span class="text-xs tracking-widest uppercase" style="color:var(--gold);">
+          B2B Multi-Vendor Commerce
+        </span>
+        <div style="width:30px;height:1px;background:linear-gradient(90deg,var(--gold),transparent)"
+             class="hidden sm:block"></div>
+      </div>
+
+      <!-- Headline -->
+      <div class="reveal d3 w-full">
+        <h1 class="wordmark gold-text leading-none w-full"
+            style="font-size:clamp(2.8rem,13vw,9rem); letter-spacing:0.16em;">
+          NUHSTAR
+        </h1>
+        <p class="tagline-serif mt-1 sm:mt-2 px-3"
+           style="font-size:clamp(0.95rem,3.2vw,1.65rem); color:#A8997A; letter-spacing:0.04em;">
+          Where Business Meets the Future of Trade
+        </p>
+      </div>
+
+      <!-- Divider -->
+      <div class="gold-line w-full max-w-[18rem] sm:max-w-sm reveal d4">
+        <div class="gold-line-diamond"></div>
+      </div>
+
+      <!-- ── RAMADAN KAREEM CARD ── -->
+      <div class="ramadan-card reveal d4 w-full max-w-xs sm:max-w-sm md:max-w-md
+                  px-5 sm:px-8 py-4 sm:py-5 flex flex-col items-center gap-2">
+
+        <!-- Stars decoration -->
+        <div class="stars-deco flex items-center gap-2">
+          <span style="--d:2.5s;--dl:0s">✦</span>
+          <span style="--d:3s;--dl:0.4s">✦</span>
+          <span style="--d:2s;--dl:0.8s">✦</span>
+
+          <!-- Crescent + star SVG -->
+          <svg width="26" height="22" viewBox="0 0 32 26" fill="none"
+               class="crescent-svg mx-1" aria-hidden="true">
+            <path d="M20 13a8 8 0 1 1-8-8 6 6 0 0 0 8 8z"
+                  fill="rgba(201,150,42,0.2)" stroke="#E8B84B" stroke-width="1.2"/>
+            <polygon points="27,2 28.2,5.5 32,5.5 29,7.5 30.2,11 27,9 23.8,11 25,7.5 22,5.5 25.8,5.5"
+                     fill="#C9962A" opacity="0.85"/>
+          </svg>
+
+          <span style="--d:2s;--dl:0.8s">✦</span>
+          <span style="--d:3s;--dl:0.4s">✦</span>
+          <span style="--d:2.5s;--dl:0s">✦</span>
+        </div>
+
+        <!-- Arabic greeting -->
+        <p class="ramadan-big-arabic text-center">رَمَضَانُ كَرِيم</p>
+
+        <!-- English greeting -->
+        <p class="ramadan-big-en text-center">Ramadan Kareem</p>
+
+        <!-- Sub message -->
+        <p class="text-center mt-1"
+           style="font-size:clamp(0.65rem,2vw,0.75rem);color:var(--text-muted);
+                  letter-spacing:0.1em;line-height:1.6;">
+          Nuhstar wishes you and your family a blessed &amp; prosperous holy month.<br/>
+          <span class="arabic-label" style="font-size:0.8em;color:rgba(201,150,42,0.6);">
+            كل عام وأنتم بخير
+          </span>
+        </p>
+      </div>
+
+      <!-- Body copy -->
+      <p class="reveal d4 text-sm sm:text-base leading-relaxed max-w-sm sm:max-w-xl px-2"
+         style="color:#8994A6;">
+        Saudi Arabia's premier B2B multi-vendor marketplace — connecting suppliers,
+        distributors, and enterprise buyers across every sector of the Kingdom's vision economy.
+      </p>
+
+      <!-- Feature pills -->
+      <div class="reveal d5 flex flex-wrap justify-center gap-1.5 sm:gap-2 md:gap-3
+                  max-w-xs sm:max-w-xl lg:max-w-2xl">
+        <div class="feature-pill px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full flex items-center gap-1.5">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#C9962A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          <span class="text-xs tracking-wide" style="color:#9CA8B8;">Multi-Vendor</span>
+        </div>
+        <div class="feature-pill px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full flex items-center gap-1.5">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#C9962A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+          <span class="text-xs tracking-wide" style="color:#9CA8B8;">B2B Ecosystem</span>
+        </div>
+        <div class="feature-pill px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full flex items-center gap-1.5">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#C9962A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          <span class="text-xs tracking-wide" style="color:#9CA8B8;">Saudi-First</span>
+        </div>
+        <div class="feature-pill px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full flex items-center gap-1.5">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#C9962A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          <span class="text-xs tracking-wide" style="color:#9CA8B8;">Real-time Analytics</span>
+        </div>
+        <div class="feature-pill px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-full flex items-center gap-1.5">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#C9962A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <span class="text-xs tracking-wide" style="color:#9CA8B8;">Secure Payments</span>
+        </div>
+      </div>
+
+      <!-- ── Countdown ── -->
+      <div class="reveal d6 w-full max-w-xs sm:max-w-md md:max-w-xl lg:max-w-2xl">
+        <p class="text-xs tracking-widest uppercase mb-3" style="color:var(--text-muted);">
+          Launching In
+        </p>
+        <!-- 4-col grid, gaps scale with screen -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
+          <div class="count-box rounded-xl p-3 sm:p-4 md:p-5 glow-gold">
+            <div class="count-number" id="days">000</div>
+            <div class="mt-1 tracking-widest uppercase"
+                 style="color:var(--text-muted);font-size:clamp(0.5rem,1.4vw,0.65rem);">Days</div>
+          </div>
+          <div class="count-box rounded-xl p-3 sm:p-4 md:p-5">
+            <div class="count-number" id="hours">00</div>
+            <div class="mt-1 tracking-widest uppercase"
+                 style="color:var(--text-muted);font-size:clamp(0.5rem,1.4vw,0.65rem);">Hours</div>
+          </div>
+          <div class="count-box rounded-xl p-3 sm:p-4 md:p-5">
+            <div class="count-number" id="minutes">00</div>
+            <div class="mt-1 tracking-widest uppercase"
+                 style="color:var(--text-muted);font-size:clamp(0.5rem,1.4vw,0.65rem);">Mins</div>
+          </div>
+          <div class="count-box rounded-xl p-3 sm:p-4 md:p-5">
+            <div class="count-number" id="seconds">00</div>
+            <div class="mt-1 tracking-widest uppercase"
+                 style="color:var(--text-muted);font-size:clamp(0.5rem,1.4vw,0.65rem);">Secs</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Progress ── -->
+      <div class="reveal d7 w-full max-w-xs sm:max-w-md md:max-w-xl lg:max-w-2xl">
+        <div class="flex justify-between items-center mb-2">
+          <span class="text-xs tracking-wider" style="color:var(--text-muted);">Development Progress</span>
+          <span class="text-xs font-semibold" style="color:var(--gold);">73%</span>
+        </div>
+        <div class="progress-bar h-1.5 rounded-full w-full">
+          <div class="progress-fill rounded-full"></div>
+        </div>
+      </div>
+
+      <!-- ── Email CTA ── -->
+      <div class="reveal d8 w-full max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg">
+        <!-- stacked on mobile, side-by-side on sm+ -->
+        <div class="flex flex-col sm:flex-row gap-2 sm:gap-3">
+          <input
+            type="email"
+            inputmode="email"
+            autocomplete="email"
+            placeholder="Enter your business email"
+            id="emailInput"
+            class="email-input flex-1 w-full px-4 sm:px-5 py-3 sm:py-3.5 rounded-lg"
+          />
+          <button
+            id="notifyBtn"
+            class="btn-gold w-full sm:w-auto px-6 sm:px-8 py-3 sm:py-3.5 rounded-lg whitespace-nowrap">
+            Notify Me
+          </button>
+        </div>
+        <p class="text-xs mt-2 text-center sm:text-left" style="color:var(--text-muted);">
+          Join <span style="color:var(--gold-pale);">1,200+</span> businesses on the waitlist. No spam — ever.
+        </p>
+      </div>
+
+    </main>
+
+    <!-- ══ FOOTER ═══════════════════════════════════════════════ -->
+    <footer class="w-full max-w-6xl reveal reveal-fade d10">
+      <div class="gold-line mb-4 sm:mb-6 opacity-30"><div class="gold-line-diamond"></div></div>
+
+      <!-- stacked on mobile, row on sm+ -->
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
+
+        <!-- Links -->
+        <div class="flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-1.5">
+          <span class="text-xs tracking-widest" style="color:var(--text-muted);">© 2025 NUHSTAR</span>
+          <span class="hidden sm:inline text-xs" style="color:var(--text-muted);">|</span>
+          <a href="#" class="text-xs tracking-wider transition-colors hover:text-amber-400"
+             style="color:var(--text-muted);">Privacy</a>
+          <a href="#" class="text-xs tracking-wider transition-colors hover:text-amber-400"
+             style="color:var(--text-muted);">Terms</a>
+          <a href="#" class="text-xs tracking-wider transition-colors hover:text-amber-400"
+             style="color:var(--text-muted);">Contact</a>
+        </div>
+
+        <!-- Social icons -->
+        <div class="flex items-center gap-2.5 sm:gap-3">
+          <a href="#" class="feature-pill p-2 rounded-lg" style="color:var(--text-muted);" aria-label="LinkedIn">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4v-7a6 6 0 0 1 6-6z"/>
+              <rect x="2" y="9" width="4" height="12"/>
+              <circle cx="4" cy="4" r="2"/>
+            </svg>
+          </a>
+          <a href="#" class="feature-pill p-2 rounded-lg" style="color:var(--text-muted);" aria-label="X">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+            </svg>
+          </a>
+          <a href="#" class="feature-pill p-2 rounded-lg" style="color:var(--text-muted);" aria-label="Instagram">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="2" width="20" height="20" rx="5"/>
+              <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+              <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+            </svg>
+          </a>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- ══ Toast ══ -->
+  <div id="toast">
+    <div class="flex items-center gap-3">
+      <div style="width:8px;height:8px;background:#C9962A;border-radius:50%;
+                  animation:twinkle 1s ease-in-out infinite;flex-shrink:0;"></div>
+      <span style="font-family:'Syne',sans-serif;font-size:0.8rem;color:#E8E4DA;letter-spacing:0.04em;">
+        You're on the list! We'll be in touch soon.
+      </span>
+    </div>
+  </div>
+
+  <!-- ══ Scripts ══ -->
+  <script>
+    /* Custom cursor — desktop only */
+    if (window.matchMedia('(pointer:fine)').matches) {
+      const cursor = document.getElementById('cursor');
+      const ring   = document.getElementById('cursorRing');
+      let mx=0,my=0,rx=0,ry=0;
+      document.addEventListener('mousemove',e=>{
+        mx=e.clientX; my=e.clientY;
+        cursor.style.left=mx+'px'; cursor.style.top=my+'px';
+      });
+      (function loop(){
+        rx+=(mx-rx)*0.12; ry+=(my-ry)*0.12;
+        ring.style.left=rx+'px'; ring.style.top=ry+'px';
+        requestAnimationFrame(loop);
+      })();
+    }
+
+    /* Stars — fewer on mobile to save paint */
+    (function(){
+      const el=document.getElementById('stars');
+      const n=window.innerWidth<480?35:70;
+      for(let i=0;i<n;i++){
+        const s=document.createElement('div');
+        s.className='star';
+        const size=1+Math.random()*2;
+        s.style.cssText=`left:${Math.random()*100}%;top:${Math.random()*100}%;`
+          +`--dur:${2+Math.random()*4}s;--delay:${Math.random()*4}s;`
+          +`opacity:${0.1+Math.random()*0.4};width:${size}px;height:${size}px;`;
+        el.appendChild(s);
+      }
+    })();
+
+    /* Countdown — target Sep 30, 2025 */
+    const TARGET=new Date('2026-10-30T00:00:00');
+    function pad(n,len=2){return String(n).padStart(len,'0');}
+    function tick(){
+      const d=Math.max(0,TARGET-Date.now());
+      document.getElementById('days').textContent    =pad(Math.floor(d/86400000),3);
+      document.getElementById('hours').textContent   =pad(Math.floor((d%86400000)/3600000));
+      document.getElementById('minutes').textContent =pad(Math.floor((d%3600000)/60000));
+      document.getElementById('seconds').textContent =pad(Math.floor((d%60000)/1000));
+    }
+    tick(); setInterval(tick,1000);
+
+    /* Notify */
+    document.getElementById('notifyBtn').addEventListener('click',()=>{
+      const v=document.getElementById('emailInput').value.trim();
+      if(!v||!v.includes('@')){document.getElementById('emailInput').focus();return;}
+      const t=document.getElementById('toast');
+      t.style.display='block';
+      t.style.opacity='0';
+      t.style.transition='opacity 0.3s';
+      requestAnimationFrame(()=>{ t.style.opacity='1'; });
+      setTimeout(()=>{
+        t.style.opacity='0';
+        setTimeout(()=>{ t.style.display='none'; },300);
+      },3700);
+    });
+    /* Ramadan ribbon dismiss */
+    document.getElementById('ribbon-close').addEventListener('click', function() {
+      const ribbon = document.getElementById('ramadan-ribbon');
+      ribbon.style.transition = 'opacity 0.4s, transform 0.4s';
+      ribbon.style.opacity = '0';
+      ribbon.style.transform = 'translateY(-100%)';
+      setTimeout(() => {
+        ribbon.style.display = 'none';
+        // Remove the extra top padding now ribbon is gone
+        document.querySelector('.safe-wrap').style.paddingTop = '';
+      }, 400);
+    });
+  </script>
+</body>
+</html>
